@@ -15,6 +15,6 @@ class OrderProcessController extends Controller
         // process created random order
         ProcessOrderPayment::dispatch($order->id);
 
-        return 'Order Created';
+        return "Order Created Successfully.<hr> Order ID:{$order->id}<hr> User: {$order?->user?->name}";
     }
 }
