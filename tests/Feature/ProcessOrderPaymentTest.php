@@ -9,6 +9,7 @@ use Illuminate\Foundation\Testing\WithFaker;
 use Tests\TestCase;
 use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Queue;
 
 class ProcessOrderPaymentTest extends TestCase
 {
@@ -18,7 +19,9 @@ class ProcessOrderPaymentTest extends TestCase
      */
     public function test_order_process_and_retries(): void
     {
+        Queue::fake();
         Bus::fake();
+
         $order = Order::factory()->create();
 
         $this->assertEquals('pending', $order->status);
@@ -31,6 +34,10 @@ class ProcessOrderPaymentTest extends TestCase
 
         $job = new ProcessOrderPayment($order->id);
 
+        $mock = $this->mock(\Illuminate\Support\Arr::class);
+        $mock->shouldReceive('random')
+            ->andReturn('failed');
+
         try {
             $job->handle();
         } catch (\Exception $e) {
@@ -38,15 +45,26 @@ class ProcessOrderPaymentTest extends TestCase
         }
 
         $order->refresh();
-
         $this->assertTrue($job->orderProcessingStatus);
 
-         // Retry the job
-         $job->handle();
+        $maxAttempts = $job->tries;
+        $attempts = 0;
 
-         $order->refresh();
+        while ($attempts < $maxAttempts) {
+            try {
+                $job->handle();
+                $this->fail('Job should have failed but succeeded');
+            } catch (\Exception $e) {
+                $attempts++;
+                if ($attempts === $maxAttempts) {
+                    $job->failed($e);
+                }
+            }
+        }
+        $this->assertEquals($maxAttempts, $attempts);
 
-        $this->assertContains($order->status, ['completed', 'failed']);
+        $order->refresh();
+        $this->assertEquals('failed', $order->status);
 
     }
 }

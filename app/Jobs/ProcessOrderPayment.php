@@ -52,6 +52,11 @@ class ProcessOrderPayment implements ShouldQueue
     {
         $order = Order::findOrFail($this->orderId);
 
+        if (!$order) {
+            Log::error("Order not found: {$this->orderId}");
+            throw new \Exception("Order not found");
+        }
+
         // Updates order status to processing.
         $order->update(['status' => 'processing']);
         $this->orderProcessingStatus = $order->status == 'processing';
@@ -81,6 +86,8 @@ class ProcessOrderPayment implements ShouldQueue
             throw new \Exception("Payment processing failed");
 
         }
+        Log::info("Order {$this->orderId} payment completed.");
+
     }
 
     public function failed(Throwable $exception)
