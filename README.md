@@ -55,20 +55,45 @@
 
 ### 6. Create User and Order Random
 
-    - Please visit [Order Processing](http://localhost/order-process).
+- Please visit 👉 [Order Processing](http://localhost/order-process).
 
-    - check your queue in the terminal to track order payment process job 
+- check your queue in the terminal to track order payment process job 
 
-    - check laravel.logs for debugging process and expected exceptions
+- check laravel.logs for debugging process and expected exceptions
 
 ### 7. Run Test Case For order processing 
 
     - ./vendor/bin/sail artisan test
 
+
+### 8. Access phpMyAdmin 
+
+Once Sail is up, open your browser and go to:
+
+- Open 👉 [phpMyAdmin](http://localhost:8080).
+
+-Server: mysql
+
+-Username: sail
+
+-Password: password
+
 # b. Issues Encountered and Solutions
 
-## Issue 1: Queue Worker Not Processing Jobs:
+
+## Issue 1: Configure Laravel Sail
+    - error getting credentials - err: exec: "docker-credential-desktop": executable file not found in $PATH
+    - Solution: 
+        1. nano ~/.docker/config.json
+        2. Remove or comment out the "credsStore": "desktop" line, then save the file.
+        3. ./vendor/bin/sail build --no-cache
+        4. ./vendor/bin/sail up -d
+
+## Issue 2: Queue Worker Not Processing Jobs:
     - Solution: Ensure the QUEUE_CONNECTION is correctly set in .env and that the queue table exists.
+    - QUEUE_CONNECTION=database
+
+
 
 
 # c. Possible Optimizations
@@ -79,5 +104,4 @@
     - Use Laravel’s job batching to handle multiple orders simultaneously.
 ## Advanced Logging and Monitoring:
     - Integrate tools like Laravel Horizon or external monitoring services for better visibility into job processing.
-    - Asynchronous Processing with Queued Event Listeners:
-        - Implement queued event listeners for more granular control over processing.
+    - Implement queued event listeners for more granular control over processing.
