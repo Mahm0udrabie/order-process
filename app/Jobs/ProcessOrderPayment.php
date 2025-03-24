@@ -10,7 +10,7 @@ use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Log;
-
+use Throwable;
 class ProcessOrderPayment implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
@@ -77,17 +77,17 @@ class ProcessOrderPayment implements ShouldQueue
         if($isCompleted) {
             Log::info("Order ".$order->id." completed");
         } else {
-            Log::error("Order  ".$order->id." failed");
+            Log::warning("Order ID {$this->orderId} payment failed. Retrying...");
+            throw new \Exception("Payment processing failed");
+
         }
     }
 
-    public function failed(Exception $exception)
+    public function failed(Throwable $exception)
     {
-        $order = Order::find($this->orderId);
-        if ($order) {
-            $order->update(['status' => 'failed']);
-            Log::error("Job Order  ".$order->id." failed: ".$exception->getMessage());
-        }
+        Log::error("Order processing job failed after retries for Order ID {$this->orderId}: " . $exception->getMessage());
     }
+
+
 
 }
